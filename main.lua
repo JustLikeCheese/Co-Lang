@@ -36,9 +36,6 @@ CoSyntax.codeSplit = function(code)
     elseif numberMode and table.contains({ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }, char) == false then -- 如果为非法字符
       return { "!", "SyntaxError: 非法的字面量。" } -- 返回错误
     end
-    if startIndex > 0 and index == #code then
-      word = string.sub(code, startIndex, index)
-    end
     if word ~= nil then -- 如果为回收状态
       table.insert(result, word)
       word = nil
@@ -46,6 +43,9 @@ CoSyntax.codeSplit = function(code)
   end
   if stringMode then -- 如果双引号未结束
     return { "!", "SyntaxError: 未闭合的双引号。" }
+  elseif startIndex > 0 then -- 如果还有未回收的字符串
+    word = string.sub(code, startIndex, #code)
+    table.insert(result, word)
   end
   return result
 end
