@@ -16,26 +16,15 @@ CoSyntax.codeSplit = function(code)
         stringMode = char == '\"'
         numberMode = table.contains({ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-' }, char)
       end
+    elseif stringMode2 then -- 如果为反义模式
+      stringMode2 = false -- 取消反义模式
     elseif stringMode then                         -- 字符串模式
-      if stringMode2 then                          -- 如果为反义模式
-        stringMode2 = false                        -- 取消反义模式
-      elseif char == '\\' then                     -- 如果为反斜杠
+      if char == '\\' then                     -- 如果为反斜杠
         stringMode2 = true                         -- 开启反义模式
       elseif char == '\"' then                     --如果为双引号,结束字符串
         word = string.sub(code, startIndex, index) -- 截取字符串
         stringMode = false                         -- 更新字符串模式
         startIndex = 0
-      end
-    elseif numberMode then -- 数字模式
-      if char == ' ' then -- 如果为空格
-        word = string.sub(code, startIndex, index - 1) -- 截取字符串
-        numberMode = false -- 更新数字模式
-      elseif char == '\"' then -- 如果为双引号
-        word = string.sub(code, startIndex, index - 1) -- 截取字符串
-        stringMode = true -- 更新字符串模式
-        startIndex = index
-      elseif table.contains({ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }, char) == false then -- 如果为非法字符
-        return { "!", "SyntaxError: 非法的字面量。" } -- 返回错误
       end
     elseif char == ' ' then -- 如果为空格(普通模式)
       word = string.sub(code, startIndex, index - 1) -- 截取字符串
@@ -44,6 +33,8 @@ CoSyntax.codeSplit = function(code)
       word = string.sub(code, startIndex, index - 1) -- 截取字符串
       stringMode = true -- 更新字符串模式
       startIndex = index -- 更新开始位置
+    elseif numberMode and table.contains({ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' }, char) == false then -- 如果为非法字符
+      return { "!", "SyntaxError: 非法的字面量。" } -- 返回错误
     end
     if startIndex > 0 and index == #code then
       word = string.sub(code, startIndex, index)
@@ -69,3 +60,4 @@ CoSyntax.codeType = function(code)
     return 0 -- variable
   end
 end
+print(dump(CoSyntax.codeSplit("Hello World!")))
