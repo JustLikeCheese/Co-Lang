@@ -60,4 +60,26 @@ CoSyntax.codeType = function(code)
     return 0 -- variable
   end
 end
+
+-- CoState
+CoState = {}
+CoNames={}
+CoValues={}
+CoTypes={}
+CoState.put=function(name,value,type)
+  table.insert(CoNames,name)
+  table.insert(CoValues,value)
+  table.insert(CoTypes,type)
+end
+CoState.get=function(name)
+  for i=1,#CoNames do
+    if CoNames[i]==name then
+      return CoValues[i]
+    end
+  end
+  return "nil"
+end
+
+
+
 print(dump(CoSyntax.codeSplit("Hello World!")))

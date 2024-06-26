@@ -71,45 +71,105 @@ string content "Hello, World!"
 echo   content
 ```
 ## 内置函数
-赋值：const 变量名 值  
+赋值：const [name] (value)  
 值可以为变量、字符串和数字，变量类型会根据值的内容判断
 
-赋值（但是指定类型为string）：string 变量名 值  
+赋值（但是指定类型为string）：string [name] (value)  
 值可以为变量、字符串和数字，变量类型为字符串（会自动转换）
 
-赋值（但是指定类型为number）：number 变量名 值  
+赋值（但是指定类型为number）：number [name] (value)  
 值可以为变量、字符串和数字，变量类型为数字（会自动转换）
 
-加法：add 变量 [值..]  
+加法：add [name] (value..)  
 计算变量加值的结果，然后赋值给变量。若其中有个参数不是数字类型，就会当做字符串拼接处理
 
-减法：sub 变量 [值..]  
+减法：sub [name] (value..)  
 计算变量逐个减去值的结果，然后赋值给变量。（参数必须为数字）
 
-乘法：mul 变量 [值..]  
+乘法：mul [name] (value..)  
 计算变量逐个乘以值的结果，然后赋值给变量。（参数必须为数字）
 
-除法：div 变量 [值..]  
+除法：div [name] (value..)  
 计算变量逐个除以值的结果，然后赋值给变量。（参数必须为数字）
 
-判断：if-eq 变量1 变量2  
+判断：if-eq [name] [name]  
 判断变量1与变量2是否相等
 
-判断：if-ne 变量1 变量2  
+判断：if-ne [name] [name]  
 判断变量1与变量2是否不相等
 
-判断：if-lt 变量1 变量2  
+判断：if-lt [name] [name]  
 判断变量1是否小于变量2
 
-判断：if-le 变量1 变量2  
+判断：if-le [name] [name]  
 判断变量1是否小于等于变量2
 
-判断：if-gt 变量1 变量2  
+判断：if-gt [name] [name]  
 判断变量1是否大于变量2
 
-判断：if-ge 变量1 变量2  
+判断：if-ge [name] [name]  
 判断变量1是否大于等于变量2
 
-输出：echo (值..)  
+输出：echo (value..)  
 逐个输出参数列表的内容
 
+局部函数：local-fun [name] (name..)  
+定义局部函数，局部函数仅在当前作用域生效
+
+局部变量：local-const [name] (value)  
+定义局部变量，局部变量仅在当前作用域生效
+
+函数：fun [name] (name..)  
+定义函数
+
+返回：return (value..)
+使函数返回值
+
+调用函数：invoke [name] (value..)  
+调用名为 [name] 的函数，参数列表为 [value..]
+
+结束：end  
+结束代码块
+
+输出：echo (value..)
+逐个输出参数列表的内容
+
+输入：input [name] (value)  
+输入变量 [name]，提示输入内容为 (value)
+
+捕捉错误：try  
+尝试运行代码块，如果发生错误，会跳转到 catch 块
+
+抛出错误：error (value)  
+在当前作用域抛出错误，错误内容为 (value)
+
+捕捉错误：catch [name]  
+捕捉错误，错误内容保存在 [name]
+
+标签：label [name]  
+在当前作用域创建标签，标签名是 [name]
+
+跳转：goto [name]  
+跳转到名为 [name] 的标签
+
+加载文本代码：load (value)  
+加载文本代码，文本代码内容是 (value)
+
+加载库：import (value)  
+加载库，库名可以是文件名或者是 URL 地址
+
+## Co Language 实现
+### 函数的实现
+CoLanguage函数的实现
+函数实际也是以字符串进行存储的
+以变量名中不能包含空格这个特性，将参数以空格分隔
+最后一个字符串为实际函数加载的文本
+函数时
+
+### 作用域的实现
+CoLanguage作用域原理
+CoLanguage默认会有一个计数器来记录当前的作用域层数，初始值为0。
+当获取变量时，会以 “计数器+变量名” 来获取变量
+当遇到 if、fun、try 或 catch 等语句时，计数器加1
+当遇到 end 结束语句时，会开始回收以 “计数器值” 开头的变量，最后计数器减1
+遇到 return 结束语句时，会先把变量向上层作用域传递，然后再进行回收

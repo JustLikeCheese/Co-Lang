@@ -1,0 +1,34 @@
+// 注释内容
+{
+    name: ["Co Language", ".col", ".co"]
+    hide: false
+    ignoreCase: true
+    comment: {startsWith: "//"}
+    // lineBackground: {match: /正则表达式/, style: "风格名称，使用该风格的前景色作为行背景色"}
+    contains: [
+        //
+        // 此处内容是整个语法文件的核心，语法引擎会使用这里的匹配器去查找并高亮文本
+        //
+        
+        {match: keywordsToRegex(
+            // 基本变量类型
+	        "const number string"
+	        // 局部变量
+	        "local-const local-fun"
+	        // 数学运算操作
+	        "add sub mul div"
+	        // 字符串操作
+	        "string-sub string-cat string-len"
+	        // 函数
+	        "fun return invoke end"
+	        // 标准输入输出
+	        "echo input error try catch"
+	        // 条件分支语句
+	        "if if-eq if-ne if-gt if-ge if-lt if-le"
+	        // 跳转语句
+	        "label goto"
+	        // 内置函数
+	        "load import"
+		), 0: "keyword"}
+    ]
+}
