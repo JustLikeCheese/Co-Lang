@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "sumneko.hana-shirosaki",
+        "andischerer.theme-atom-one-dark",
+        "akamud.vscode-theme-onedark",
+        "alibaba-cloud.tongyi-lingma",
+        "bierner.markdown-emoji",
+        "bierner.markdown-preview-github-styles",
+        "bierner.markdown-mermaid",
+        "bierner.markdown-footnotes",
+        "bierner.markdown-checkbox",
+        "yinfei.luahelper",
+        "sumneko.lua",
+        "ms-ceintl.vscode-language-pack-zh-hans"
+    ]
+}

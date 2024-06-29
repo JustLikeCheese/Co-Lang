@@ -61,6 +61,26 @@ CoSyntax.codeType = function(code)
   end
 end
 
+CoSyntax.codeTypes = function(codes)
+  local result = {}
+  for i = 1, #codes do
+    local code = codes[i]
+    local type = CoSyntax.codeType(code)
+    table.insert(result, type)
+  end
+  return result
+end
+
+CoSyntax.codeVariables = function(codes)
+  local result = {}
+  for i = 1, #codes do
+    local code = codes[i]
+    local type = CoSyntax.codeType(code)
+    table.insert(result, type == 0) -- 判断是否为变量
+  end
+  return result
+end
+
 CoSyntax.codeFormat = function(lines)
   for i = 1, #lines do
     local line = lines[i]
@@ -80,13 +100,15 @@ CoState = {}
 CoNames = {}
 CoValues = {}
 CoTypes = {}
+-- 添加变量
 CoState.put = function(name, value, type)
   table.insert(CoNames, name)
   table.insert(CoValues, value)
   table.insert(CoTypes, type)
 end
 
-CoState.get = function(name)
+-- 获取变量值
+CoState._getValue = function(name)
   for i = 1, #CoNames do
     if CoNames[i] == name then
       return CoValues[i]
@@ -95,17 +117,39 @@ CoState.get = function(name)
   return "null"
 end
 
-CoState.get2 = function(name)
-  local value = CoState.get(name)
-  local type = CoState.type(name)
-  if type == "number" or type == "string" then
-    return value
-  elseif type == "function" then
-    return "function: 0x"
+-- 获取表达式的值
+CoState.getValue = function(name)
+  local codeType = CoSyntax.codeType(name)
+  if codeType == 0 then
+    -- 如果为变量
+    local value = CoState._getValue(name)
+    type = CoState.getType(name)
+    if type == "number" or type == "string" then
+      return value
+    elseif type == "function" then
+      return "function: 0x"
+    else
+      return "null"
+    end
+  elseif codeType == 1 then
+    -- 如果为数字字面量
+    return name
+  elseif codeType == 2 then
+    -- 如果为字符串字面量
+    return name:sub(2, #name - 1)
   end
 end
 
-CoState.type = function(name)
+CoState.getValues = function(names)
+  local result = {}
+  for i = 1, #names do
+    table.insert(result, CoState.getValue(names[i]))
+  end
+  return result
+end
+
+-- 获取变量类型
+CoState._getType = function(name)
   for i = 1, #CoNames do
     if CoNames[i] == name then
       return CoTypes[i]
@@ -114,8 +158,83 @@ CoState.type = function(name)
   return "null"
 end
 
+-- 获取表达式类型
+CoState.getType = function(name)
+  local codeType = CoSyntax.codeType(name)
+  if codeType == 0 then
+    -- 如果为变量
+    return CoState._getType(name)
+  elseif codeType == 1 then
+    -- 如果为数字字面量
+    return "number"
+  elseif codeType == 2 then
+    -- 如果为字符串字面量
+    return "string"
+  end
+  return "null"
+end
+
+CoState.getTypes = function(names)
+  local result = {}
+  for i = 1, #names do
+    table.insert(result, CoState.getType(names[i]))
+  end
+  return result
+end
+
+CoLineCounter = 0
 CoState.load = function(lines)
+  CoLineCounter = 0
+  CoSyntax.codeFormat(lines)
+  while true do
+    -- 行计数器加一
+    CoLineCounter = CoLineCounter + 1
+    -- 获取当前行
+    local Line = lines[CoLineCounter]
+    local Parameters = CoSyntax.codeSplit(Line)
+    local Function = Parameters[1]
+    if Function == "!" then
+      -- 错误
+      error(Parameters[2])
+      return
+    end
+    table.remove(Parameters, 1)
+    -- 标准错误输出
+    local StandardError = ""
+    -- 获取参数值和类型
+    local ParameterValues = CoState.getValues(Parameters)         -- 获取表达式值
+    local ParameterTypes = CoState.getTypes(Parameters)           -- 获取表达式类型
+    local ParameterVariables = CoSyntax.codeVariables(Parameters) -- 获取参数是否为变量，如果为变量则为true
+    local ReturnValues = {}
+    local ReturnTypes = {}
+    if Function == "const" then
+      if ParameterVariables[1] then
+        local value = ParameterValues[1]
+        local type = ParameterTypes[1]
+      else
+        StandardError = "SyntaxError: 赋值语句的左边不能为常量。"
+      end
+    else
+      StandardError = "RuntimeError: 函数不存在。"
+    end
+    -- 检查标准错误输出是否不为空
+    if StandardError~="" then
+      error(StandardError,2)
+    end
+    -- 检查返回值
+    if #ReturnValues > 0 then
+      for i = 1, #ReturnValues do
+        if ParameterVariables[i] then
+          -- 如果为变量则返回变量
+          CoState.put(Parameters[i], ReturnValues[i], ReturnTypes[i])
+        end
+      end
+    end
+    if CoLineCounter == #lines then
+      break
+    end
+  end
 end
 
 -- print(dump(CoSyntax.codeSplit("Hello World!")))
-CoState.load({ "echo \"HelloWorld!" })
+CoState.load({ "echo \"HelloWorld!\" 123 456" })

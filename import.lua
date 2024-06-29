@@ -7,13 +7,13 @@ function table.contains(_table, _value)
     return false
 end
 
-function table.find(_table, _value)
+function table.findValue(_table, _value)
     for key, value in pairs(_table) do
         if value == _value then
             return key
         end
     end
-    return nil
+    return 0
 end
 
 function dump(o)
