@@ -21,6 +21,7 @@ function dump(o)
     local _t = {}
     local _n = {}
     local space, deep = string.rep(' ', 2), 0
+    local type = _ENV.type
     local function _ToString(o, _k)
         if type(o) == ('number') then
             table.insert(t, o)

@@ -6,7 +6,7 @@ CoSyntax.codeSplit = function(code)
   local startIndex = 0
   local stringMode, stringMode2 = false, false
   local result, numberMode = {}, false
-  local word = nil
+  local word
   for index = 1, #code do
     -- 获取每个字符
     local char = string.sub(code, index, index)
@@ -102,9 +102,15 @@ CoValues = {}
 CoTypes = {}
 -- 添加变量
 CoState.put = function(name, value, type)
-  table.insert(CoNames, name)
-  table.insert(CoValues, value)
-  table.insert(CoTypes, type)
+  local index = table.findValue(CoNames, name)
+  if index == 0 then
+    table.insert(CoNames, name)
+    table.insert(CoValues, value)
+    table.insert(CoTypes, type)
+  else
+    CoValues[index] = value
+    CoTypes[index] = type
+  end
 end
 
 -- 获取变量值
@@ -123,7 +129,7 @@ CoState.getValue = function(name)
   if codeType == 0 then
     -- 如果为变量
     local value = CoState._getValue(name)
-    type = CoState.getType(name)
+    local type = CoState.getType(name)
     if type == "number" or type == "string" then
       return value
     elseif type == "function" then
@@ -182,7 +188,13 @@ CoState.getTypes = function(names)
   return result
 end
 
-CoLineCounter = 0
+CoLineCounter = 0       -- 行计数器
+StandardError = ""      -- 标准错误输出
+ParameterValues = {}    -- 参数值
+ParameterTypes = {}     -- 参数类型
+ParameterVariables = {} -- 参数是否为变量
+ReturnValues = {}       -- 返回值
+ReturnTypes = {}        -- 返回类型
 CoState.load = function(lines)
   CoLineCounter = 0
   CoSyntax.codeFormat(lines)
@@ -200,26 +212,35 @@ CoState.load = function(lines)
     end
     table.remove(Parameters, 1)
     -- 标准错误输出
-    local StandardError = ""
+    StandardError = ""
     -- 获取参数值和类型
-    local ParameterValues = CoState.getValues(Parameters)         -- 获取表达式值
-    local ParameterTypes = CoState.getTypes(Parameters)           -- 获取表达式类型
-    local ParameterVariables = CoSyntax.codeVariables(Parameters) -- 获取参数是否为变量，如果为变量则为true
-    local ReturnValues = {}
-    local ReturnTypes = {}
+    ParameterValues = CoState.getValues(Parameters)         -- 获取表达式值
+    ParameterTypes = CoState.getTypes(Parameters)           -- 获取表达式类型
+    ParameterVariables = CoSyntax.codeVariables(Parameters) -- 获取参数是否为变量，如果为变量则为true
+    ReturnValues = {}
+    ReturnTypes = {}
     if Function == "const" then
       if ParameterVariables[1] then
-        local value = ParameterValues[1]
-        local type = ParameterTypes[1]
+        local value = ParameterValues[2]
+        local type = ParameterTypes[2]
+        table.insert(ReturnValues, value)
+        table.insert(ReturnTypes, type)
       else
         StandardError = "SyntaxError: 赋值语句的左边不能为常量。"
       end
+    elseif Function == "echo" then
+      local result = ""
+      for i = 1, #ParameterValues do
+        result = result .. ParameterValues[i] .. " "
+      end
+      print(result)
     else
-      StandardError = "RuntimeError: 函数不存在。"
+      StandardError = "RuntimeError: 名为 `" .. Function .. "` 的函数不存在。"
     end
     -- 检查标准错误输出是否不为空
-    if StandardError~="" then
-      error(StandardError,2)
+    if StandardError ~= "" then
+      error(StandardError, 2)
+      return
     end
     -- 检查返回值
     if #ReturnValues > 0 then
@@ -237,4 +258,7 @@ CoState.load = function(lines)
 end
 
 -- print(dump(CoSyntax.codeSplit("Hello World!")))
-CoState.load({ "echo \"HelloWorld!\" 123 456" })
+CoState.load({
+  "const a \"Hello World!\"",
+  "echo a 111"
+})
